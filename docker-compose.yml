@@ -1,0 +1,39 @@
+version: '3.8'
+
+
+
+services:
+  pyspark-notebook:
+    image: jupyter/pyspark-notebook:latest
+    container_name: pyspark-notebook
+    ports:
+      - "8888:8888"  # Jupyter Notebook
+      - "4040:4040"  # Spark UI
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/home/jovyan/data
+    environment:
+      - SPARK_LOCAL_IP=0.0.0.0
+      - PYSPARK_PYTHON=python
+      - JUPYTER_ENABLE_LAB=yes
+      # Snowflake credentials (from .env)
+      - SNOWFLAKE_ACCOUNT=${SNOWFLAKE_ACCOUNT}
+      - SNOWFLAKE_USER=${SNOWFLAKE_USER}
+      - SNOWFLAKE_PASSWORD=${SNOWFLAKE_PASSWORD}
+      - SNOWFLAKE_ROLE=${SNOWFLAKE_ROLE:-ACCOUNTADMIN}
+      - SNOWFLAKE_DATABASE=${SNOWFLAKE_DATABASE}
+      - SNOWFLAKE_WAREHOUSE=${SNOWFLAKE_WAREHOUSE}
+      - SNOWFLAKE_SCHEMA_RAW=${SNOWFLAKE_SCHEMA_RAW:-RAW}
+      - SNOWFLAKE_SCHEMA_ANALYTICS=${SNOWFLAKE_SCHEMA_ANALYTICS:-ANALYTICS}
+      # Data parameters
+      - START_YEAR=${START_YEAR:-2015}
+      - END_YEAR=${END_YEAR:-2025}
+      - SERVICES=${SERVICES:-yellow,green}
+      - RUN_ID=${RUN_ID:-manual}
+    user: root
+    command: >
+      bash -c "
+      pip install --quiet snowflake-connector-python requests pandas &&
+      start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --NotebookApp.allow_root=True
+      "
+    restart: unless-stopped
